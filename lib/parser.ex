@@ -225,6 +225,19 @@ defmodule ThriftQlEx.Parser do
     }
   end
 
+  defp extract_field(%Thrift.AST.Field{
+         name: name,
+         type: {:list, %Thrift.AST.TypeRef{referenced_type: type}}
+       }) do
+    %T.IntrospectionField{
+      args: [],
+      name: name,
+      type: %T.IntrospectionListTypeRef{
+        ofType: %T.IntrospectionFieldReference{referenced_type: type}
+      }
+    }
+  end
+
   defp extract_field(%Thrift.AST.Function{
          name: name,
          params: params,
