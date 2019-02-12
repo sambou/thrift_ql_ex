@@ -12,13 +12,12 @@ Note: Currently, the library itself only parses Thrift IDL into the GraphQL JSON
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `thrift_ql_ex` to your list of dependencies in `mix.exs`:
+Add `thrift_ql_ex` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:thrift_ql_ex, "~> 0.1.0"}
+    {:thrift_ql_ex, github: "sambou/thrift_ql_ex"}
   ]
 end
 ```
@@ -26,3 +25,14 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/thrift_ql_ex](https://hexdocs.pm/thrift_ql_ex).
+
+## Open topics
+
+- [ ] handle Sets (treat as list)
+- [ ] handle Maps
+- [ ] handle Union -> consider dropping; create compound type
+- [ ] handle optional / non optional fields
+- [ ] deal with Services, Namespaces and naming conflicts
+- [ ] transform JSON -> SDL
+- [ ] include descriptions and deprecations
+- [ ] implement directive for automatic resolution via Thrift client
