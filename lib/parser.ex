@@ -1,10 +1,12 @@
 defmodule ThriftQlEx.Parser do
+  @moduledoc false
+
   alias ThriftQlEx.Types, as: T
 
   def parse(doc) do
     case Thrift.Parser.parse_string(doc) do
       {:ok, schema} ->
-        parse_schema(schema)
+        {:ok, parse_schema(schema)}
 
       e ->
         e
@@ -50,9 +52,6 @@ defmodule ThriftQlEx.Parser do
   defp resolve_referenced_types(unresolved_types, types) do
     unresolved_types
     |> Enum.map(fn
-      %T.IntrospectionField{type: %T.IntrospectionFieldReference{}} = type ->
-        replace_reference_type(type, types)
-
       %T.IntrospectionField{
         args: args,
         type:
@@ -64,13 +63,16 @@ defmodule ThriftQlEx.Parser do
             type: %T.IntrospectionListTypeRef{list_ref | ofType: resolve_reference(ref, types)}
         }
 
+      %T.IntrospectionField{type: %T.IntrospectionFieldReference{}} = type ->
+        replace_reference_type(type, types)
+
       %T.IntrospectionObjectType{fields: fields} = object ->
         %T.IntrospectionObjectType{
           object
           | fields: resolve_referenced_fields(fields, types)
         }
 
-      t ->
+      %ThriftQlEx.Types.IntrospectionEnumType{} = t ->
         t
     end)
   end
@@ -82,6 +84,17 @@ defmodule ThriftQlEx.Parser do
         %T.IntrospectionField{
           name: field.name,
           type: resolve_reference(field, types)
+        }
+
+      %T.IntrospectionField{
+        args: args,
+        type:
+          %T.IntrospectionListTypeRef{ofType: %T.IntrospectionFieldReference{} = ref} = list_ref
+      } = field ->
+        %T.IntrospectionField{
+          field
+          | args: resolve_input_field_reference(args, types),
+            type: %T.IntrospectionListTypeRef{list_ref | ofType: resolve_reference(ref, types)}
         }
 
       t ->
