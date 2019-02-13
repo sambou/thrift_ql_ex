@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "gql-schema": "node ./schema.js --src \"./schema.json\" --out \"./schema.graphql\""
+    "gql-schema": "node ./schema.js --src \"./schema2.json\" --out \"./schema2.graphql\""
   },
   "repository": {
     "type": "git",
