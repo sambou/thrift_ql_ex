@@ -2,7 +2,7 @@
 
 ![Thrift to GraphQL](images/thrift_to_gql.png)
 
-ThriftQlEx converts Thrift IDL into GraphQL SDL.
+ThriftQlEx converts Thrift IDL into GraphQL SDL. Inspired by [AirBnBs approach](https://medium.com/airbnb-engineering/reconciling-graphql-and-thrift-at-airbnb-a97e8d290712).
 
 Usage:
 
@@ -43,3 +43,4 @@ Thrift and GraphQL have similar type systems, but certain concepts from Thrift d
 - [ ] include descriptions and deprecations
 - [ ] implement directive for automatic resolution via Thrift client
 - [ ] generate input objects
+- [ ] how to distinguish between queries and mutations?
