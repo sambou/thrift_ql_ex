@@ -30,8 +30,10 @@ You need to create docs yourself via `mix docs` until the package is published t
 
 Thrift and GraphQL have similar type systems, but certain concepts from Thrift don't have a correspondence in GraphQL. Below is a list of decisions that were necessary to support certain Thrift features:
 
-- Sets are lists
+- Enums do not keep values from Thrift, their value is the defined constant
+- Thrift sets are represented as GraphQL lists
 - Thrift unions are not supported
+- Polymorphism is a non-feature in Thrift, so no Graphql `interface` type 😞
 
 ## Open topics
 
@@ -40,3 +42,4 @@ Thrift and GraphQL have similar type systems, but certain concepts from Thrift d
 - [ ] deal with Services, Namespaces and naming conflicts
 - [ ] include descriptions and deprecations
 - [ ] implement directive for automatic resolution via Thrift client
+- [ ] generate input objects
