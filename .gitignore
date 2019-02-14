@@ -24,9 +24,9 @@ thrift_ql_ex-*.tar
 
 /node_modules/
 
-schema.json
+schema*.json
 
-schema.graphql
+schema*.graphql
 
 /.elixir_ls/
 

@@ -16,14 +16,12 @@ defmodule ThriftQlEx.Parser do
   defp parse_schema(%Thrift.AST.Schema{} = schema) do
     types = get_base_types(schema) |> add_query(schema)
 
-    %{
-      "data" => %T.IntrospectionQuery{
-        __schema: %T.IntrospectionSchema{
-          queryType: %T.IntrospectionNamedTypeRef{name: "Query", kind: "OBJECT"},
-          mutationType: nil,
-          types: types,
-          directives: []
-        }
+    %T.IntrospectionQuery{
+      __schema: %T.IntrospectionSchema{
+        queryType: %T.IntrospectionNamedTypeRef{name: "Query", kind: "OBJECT"},
+        mutationType: nil,
+        types: types,
+        directives: []
       }
     }
   end
@@ -73,6 +71,9 @@ defmodule ThriftQlEx.Parser do
         }
 
       %ThriftQlEx.Types.IntrospectionEnumType{} = t ->
+        t
+
+      t ->
         t
     end)
   end
@@ -235,6 +236,50 @@ defmodule ThriftQlEx.Parser do
       type: %T.IntrospectionListTypeRef{
         ofType: %T.IntrospectionScalarType{name: "Int"}
       }
+    }
+  end
+
+  defp extract_field(%Thrift.AST.Function{
+         name: name,
+         return_type: string_val
+       })
+       when string_val in [:string, :binary, :slist] do
+    %T.IntrospectionField{
+      name: name,
+      type: %T.IntrospectionScalarType{name: "String"}
+    }
+  end
+
+  defp extract_field(%Thrift.AST.Function{
+         name: name,
+         return_type: float_val
+       })
+       when float_val in [:double] do
+    %T.IntrospectionField{
+      name: name,
+      type: %T.IntrospectionScalarType{name: "Float"}
+    }
+  end
+
+  defp extract_field(%Thrift.AST.Function{
+         name: name,
+         return_type: bool_val
+       })
+       when bool_val in [:bool] do
+    %T.IntrospectionField{
+      name: name,
+      type: %T.IntrospectionScalarType{name: "Boolean"}
+    }
+  end
+
+  defp extract_field(%Thrift.AST.Function{
+         name: name,
+         return_type: int_val
+       })
+       when int_val in [:byte, :i8, :i16, :i32, :i64] do
+    %T.IntrospectionField{
+      name: name,
+      type: %T.IntrospectionScalarType{name: "Int"}
     }
   end
 
