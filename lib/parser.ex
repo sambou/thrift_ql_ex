@@ -3,6 +3,14 @@ defmodule ThriftQlEx.Parser do
 
   alias ThriftQlEx.Types, as: T
 
+  @list_like [:list, :set]
+  @string_like [:string, :binary, :slist]
+  @int_like [:byte, :i8, :i16, :i32, :i64]
+  @bool_like [:bool]
+  @float_like [:double]
+
+  @scalars @string_like ++ @int_like ++ @float_like ++ @bool_like
+
   def parse(doc) do
     case Thrift.Parser.parse_string(doc) do
       {:ok, schema} ->
@@ -154,30 +162,12 @@ defmodule ThriftQlEx.Parser do
 
   ### Primitives
 
-  # 'string' | 'binary' | 'slist'
   @spec extract_field(any) :: %T.IntrospectionField{} | %T.IntrospectionFieldReference{}
-  defp extract_field(%Thrift.AST.Field{type: string_val, name: name})
-       when string_val in [:string, :binary, :slist] do
-    %T.IntrospectionField{name: name, type: %T.IntrospectionScalarType{name: "String"}}
+  defp extract_field(%Thrift.AST.Field{type: val, name: name})
+       when val in @scalars do
+    %T.IntrospectionField{name: name, type: convert_scalar(val)}
   end
 
-  # 'byte' | 'i8' | 'i16' | 'i32' | 'i64'
-  defp extract_field(%Thrift.AST.Field{type: int_val, name: name})
-       when int_val in [:byte, :i8, :i16, :i32, :i64] do
-    %T.IntrospectionField{name: name, type: %T.IntrospectionScalarType{name: "Int"}}
-  end
-
-  # 'double'
-  defp extract_field(%Thrift.AST.Field{type: :double, name: name}) do
-    %T.IntrospectionField{name: name, type: %T.IntrospectionScalarType{name: "Float"}}
-  end
-
-  # 'bool'
-  defp extract_field(%Thrift.AST.Field{type: :bool, name: name}) do
-    %T.IntrospectionField{name: name, type: %T.IntrospectionScalarType{name: "Boolean"}}
-  end
-
-  ### List primitive types
   defp extract_field(%Thrift.AST.Field{
          type: %Thrift.AST.TypeRef{
            referenced_type: type
@@ -187,112 +177,42 @@ defmodule ThriftQlEx.Parser do
     %T.IntrospectionFieldReference{name: name, referenced_type: type}
   end
 
+  ### List-likes
+
   defp extract_field(%Thrift.AST.Field{
          name: name,
-         type: {:list, string_val}
+         type: {container, val}
        })
-       when string_val in [:string, :binary, :slist] do
+       when val in @scalars and container in @list_like do
     %T.IntrospectionField{
       name: name,
       type: %T.IntrospectionListTypeRef{
-        ofType: %T.IntrospectionScalarType{name: "String"}
+        ofType: convert_scalar(val)
       }
     }
   end
 
   defp extract_field(%Thrift.AST.Field{
          name: name,
-         type: {:list, float_val}
+         type: {container, %Thrift.AST.TypeRef{referenced_type: type}}
        })
-       when float_val in [:double] do
+       when container in @list_like do
     %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionListTypeRef{
-        ofType: %T.IntrospectionScalarType{name: "Float"}
-      }
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Field{
-         name: name,
-         type: {:list, bool_val}
-       })
-       when bool_val in [:bool] do
-    %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionListTypeRef{
-        ofType: %T.IntrospectionScalarType{name: "Boolean"}
-      }
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Field{
-         name: name,
-         type: {:list, int_val}
-       })
-       when int_val in [:byte, :i8, :i16, :i32, :i64] do
-    %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionListTypeRef{
-        ofType: %T.IntrospectionScalarType{name: "Int"}
-      }
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Function{
-         name: name,
-         return_type: string_val
-       })
-       when string_val in [:string, :binary, :slist] do
-    %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionScalarType{name: "String"}
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Function{
-         name: name,
-         return_type: float_val
-       })
-       when float_val in [:double] do
-    %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionScalarType{name: "Float"}
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Function{
-         name: name,
-         return_type: bool_val
-       })
-       when bool_val in [:bool] do
-    %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionScalarType{name: "Boolean"}
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Function{
-         name: name,
-         return_type: int_val
-       })
-       when int_val in [:byte, :i8, :i16, :i32, :i64] do
-    %T.IntrospectionField{
-      name: name,
-      type: %T.IntrospectionScalarType{name: "Int"}
-    }
-  end
-
-  defp extract_field(%Thrift.AST.Field{
-         name: name,
-         type: {:list, %Thrift.AST.TypeRef{referenced_type: type}}
-       }) do
-    %T.IntrospectionField{
-      args: [],
       name: name,
       type: %T.IntrospectionListTypeRef{
         ofType: %T.IntrospectionFieldReference{referenced_type: type}
       }
+    }
+  end
+
+  defp extract_field(%Thrift.AST.Function{
+         name: name,
+         return_type: val
+       })
+       when val in @scalars do
+    %T.IntrospectionField{
+      name: name,
+      type: convert_scalar(val)
     }
   end
 
@@ -314,11 +234,12 @@ defmodule ThriftQlEx.Parser do
          name: name,
          params: params,
          return_type:
-           {:list,
+           {container,
             %Thrift.AST.TypeRef{
               referenced_type: type
             }}
-       }) do
+       })
+       when container in @list_like do
     %T.IntrospectionField{
       args: Enum.map(params, &extract_input_field/1),
       name: name,
@@ -329,27 +250,10 @@ defmodule ThriftQlEx.Parser do
   end
 
   ### Input types
-  # 'string' | 'binary' | 'slist'
   @spec extract_input_field(%Thrift.AST.Field{}) :: %T.IntrospectionInputValue{}
-  defp extract_input_field(%Thrift.AST.Field{type: string_val, name: name})
-       when string_val in [:string, :binary, :slist] do
-    %T.IntrospectionInputValue{name: name, type: %T.IntrospectionScalarType{name: "String"}}
-  end
-
-  # 'byte' | 'i8' | 'i16' | 'i32' | 'i64'
-  defp extract_input_field(%Thrift.AST.Field{type: int_val, name: name})
-       when int_val in [:byte, :i8, :i16, :i32, :i64] do
-    %T.IntrospectionInputValue{name: name, type: %T.IntrospectionScalarType{name: "Int"}}
-  end
-
-  # 'double'
-  defp extract_input_field(%Thrift.AST.Field{type: :double, name: name}) do
-    %T.IntrospectionInputValue{name: name, type: %T.IntrospectionScalarType{name: "Float"}}
-  end
-
-  # 'bool'
-  defp extract_input_field(%Thrift.AST.Field{type: :bool, name: name}) do
-    %T.IntrospectionInputValue{name: name, type: %T.IntrospectionScalarType{name: "Boolean"}}
+  defp extract_input_field(%Thrift.AST.Field{type: val, name: name})
+       when val in @scalars do
+    %T.IntrospectionInputValue{name: name, type: convert_scalar(val)}
   end
 
   defp extract_input_field(%Thrift.AST.Field{
@@ -360,4 +264,10 @@ defmodule ThriftQlEx.Parser do
        }) do
     %T.IntrospectionInputValueReference{name: name, referenced_type: type}
   end
+
+  ### Utils
+  defp convert_scalar(s) when s in @string_like, do: %T.IntrospectionScalarType{name: "String"}
+  defp convert_scalar(s) when s in @int_like, do: %T.IntrospectionScalarType{name: "Int"}
+  defp convert_scalar(s) when s in @float_like, do: %T.IntrospectionScalarType{name: "Float"}
+  defp convert_scalar(s) when s in @bool_like, do: %T.IntrospectionScalarType{name: "Boolean"}
 end
