@@ -17,7 +17,7 @@ Add `thrift_ql_ex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:thrift_ql_ex, "~> 0.2.0"}
+    {:thrift_ql_ex, github: "sambou/thrift_ql_ex"}
   ]
 end
 ```
