@@ -3,12 +3,13 @@ defmodule ThriftQlEx.Printer do
 
   alias ThriftQlEx.Types, as: T
 
-  def print_schema(%{"data" => %{__schema: schema}}) do
-    """
-    schema {\n\tquery: #{schema.queryType.name}\n}
+  def print(%T.IntrospectionQuery{__schema: schema}) do
+    {:ok,
+     """
+     schema {\n\tquery: #{schema.queryType.name}\n}
 
-    #{print_types(schema.types)}
-    """
+     #{print_types(schema.types) |> String.trim_trailing()}
+     """}
   end
 
   defp print_types(types) do
@@ -23,28 +24,18 @@ defmodule ThriftQlEx.Printer do
       %T.IntrospectionObjectType{name: name, fields: fields} ->
         "type #{name} {\n#{print_types(fields)}}\n\n"
 
-      %T.IntrospectionField{args: args, name: name, type: %T.IntrospectionNamedTypeRef{name: n}}
+      %T.IntrospectionField{args: args, name: name, type: %{name: n}}
       when args != [] ->
         "\t#{name}#{print_args(args)}: #{n}\n"
 
-      %T.IntrospectionField{args: args, name: name, type: %T.IntrospectionScalarType{name: n}}
-      when args != [] ->
-        "\t#{name}#{print_args(args)}: #{n}\n"
-
-      %T.IntrospectionInputValue{name: name, type: %T.IntrospectionScalarType{name: n}} ->
-        "#{name}: #{n}, "
-
-      %T.IntrospectionField{name: name, type: %T.IntrospectionNamedTypeRef{name: n}} ->
-        "\t#{name}: #{n}\n"
-
-      %T.IntrospectionField{name: name, type: %T.IntrospectionScalarType{name: n}} ->
+      %T.IntrospectionField{name: name, type: %{name: n}} ->
         "\t#{name}: #{n}\n"
 
       %T.IntrospectionField{
         args: args,
         name: name,
         type: %T.IntrospectionListTypeRef{
-          ofType: %T.IntrospectionNamedTypeRef{name: n}
+          ofType: %{name: n}
         }
       }
       when args != [] ->
@@ -53,21 +44,10 @@ defmodule ThriftQlEx.Printer do
       %T.IntrospectionField{
         name: name,
         type: %T.IntrospectionListTypeRef{
-          ofType: %T.IntrospectionNamedTypeRef{name: n}
+          ofType: %{name: n}
         }
       } ->
         "\t#{name}: [#{n}]\n"
-
-      %T.IntrospectionField{
-        name: name,
-        type: %T.IntrospectionListTypeRef{
-          ofType: %T.IntrospectionScalarType{name: n}
-        }
-      } ->
-        "\t#{name}: [#{n}]\n"
-
-      _ ->
-        ""
     end)
     |> Enum.join("")
   end
@@ -78,13 +58,7 @@ defmodule ThriftQlEx.Printer do
       |> Enum.map(fn
         %T.IntrospectionInputValue{
           name: name,
-          type: %T.IntrospectionNamedTypeRef{name: n}
-        } ->
-          "#{name}: #{n}"
-
-        %T.IntrospectionInputValue{
-          name: name,
-          type: %T.IntrospectionScalarType{name: n}
+          type: %{name: n}
         } ->
           "#{name}: #{n}"
       end)
