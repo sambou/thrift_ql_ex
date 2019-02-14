@@ -6,8 +6,12 @@ defmodule ThriftQlEx.MixProject do
       app: :thrift_ql_ex,
       version: "0.2.0",
       elixir: "~> 1.7",
-      start_permanent: Mix.env() == :prod,
-      deps: deps()
+      start_permanent: false,
+      deps: deps(),
+      description: "Converts Thrift IDL into GraphQL SDL.",
+      package: [
+        licenses: ["MIT"]
+      ]
     ]
   end
 
