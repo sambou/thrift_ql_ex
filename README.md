@@ -1,5 +1,7 @@
 # ThriftQlEx
 
+![Thrift to GraphQL](/images/thrift_to_graphql.png)
+
 ThriftQlEx parses Thrift IDL into GraphQL SDL.
 
 Usage:
