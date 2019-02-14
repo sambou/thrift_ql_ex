@@ -4,7 +4,7 @@ defmodule ThriftQlEx.MixProject do
   def project do
     [
       app: :thrift_ql_ex,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.7",
       start_permanent: false,
       deps: deps(),

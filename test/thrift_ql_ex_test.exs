@@ -101,6 +101,67 @@ defmodule ThriftQlExTest do
     with {:ok, json} <- service |> ThriftQlEx.parse(),
          {:ok, sdl_schema} <- ThriftQlEx.print(json) do
       assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
+
+  test "Thrift sets get converted to GraphQL lists" do
+    service = """
+    struct Foo {
+      1: set<string> ls1;
+      2: set<i64> ls2;
+      3: set<bool> ls3;
+      4: set<double> ls4;
+      5: set<Bar> ls5;
+    }
+
+    struct Bar {
+      1: Baz baz;
+      2: set<string> quuz;
+    }
+
+    struct Baz {
+      1: Bar bar;
+    }
+
+    service MyService {
+      Foo foo()
+    }
+    """
+
+    expected_result = """
+    schema {
+    	query: Query
+    }
+
+    type Query {
+    \tfoo: Foo
+    }
+
+    type Bar {
+    \tbaz: Baz
+    \tquuz: [String]
+    }
+
+    type Baz {
+    \tbar: Bar
+    }
+
+    type Foo {
+    \tls1: [String]
+    \tls2: [Int]
+    \tls3: [Boolean]
+    \tls4: [Float]
+    \tls5: [Bar]
+    }
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
     end
   end
 end

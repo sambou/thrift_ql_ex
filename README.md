@@ -22,13 +22,20 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc) and published on [HexDocs](https://hexdocs.pm).The docs can be found at [https://hexdocs.pm/thrift_ql_ex](https://hexdocs.pm/thrift_ql_ex).
+## Docs
+
+You need to create docs yourself via `mix docs` until the package is published to Hexdocs.
+
+## Conversion Decisions / Type Parity
+
+Thrift and GraphQL have similar type systems, but certain concepts from Thrift don't have a correspondence in GraphQL. Below is a list of decisions that were necessary to support certain Thrift features:
+
+- Sets are lists
+- Thrift unions are not supported
 
 ## Open topics
 
-- [ ] handle Sets (treat as list)
 - [ ] handle Maps
-- [ ] handle Union -> consider dropping; create compound type
 - [ ] handle optional / non optional fields
 - [ ] deal with Services, Namespaces and naming conflicts
 - [ ] include descriptions and deprecations
