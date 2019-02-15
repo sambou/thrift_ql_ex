@@ -8,6 +8,7 @@ defmodule ThriftQlEx.Parser do
   @int_like [:byte, :i8, :i16, :i32, :i64]
   @bool_like [:bool]
   @float_like [:double]
+  @id_like [:id, :Id, :iD, :ID]
 
   @scalars @string_like ++ @int_like ++ @float_like ++ @bool_like
 
@@ -34,10 +35,11 @@ defmodule ThriftQlEx.Parser do
     }
   end
 
-  defp get_base_types(%Thrift.AST.Schema{enums: enums, structs: structs}) do
+  defp get_base_types(%Thrift.AST.Schema{enums: enums, structs: structs, typedefs: typedefs}) do
     gql_enums = enums |> Enum.map(fn {_, v} -> extract_enum(v) end)
     gql_types = structs |> Enum.map(fn {_, v} -> extract_object(v) end)
-    types = gql_enums ++ gql_types
+    gql_scalars = typedefs |> extract_scalars()
+    types = gql_enums ++ gql_types ++ gql_scalars
 
     resolve_referenced_types(types, types)
   end
@@ -135,6 +137,10 @@ defmodule ThriftQlEx.Parser do
     end)
   end
 
+  defp resolve_reference(%{referenced_type: t}, _types) when t in @id_like do
+    %T.IntrospectionScalarType{name: "ID"}
+  end
+
   defp resolve_reference(%{referenced_type: type}, types) do
     t = Enum.find(types, fn %{name: name} -> name == type end)
     %T.IntrospectionNamedTypeRef{name: t.name, kind: t.kind}
@@ -158,6 +164,15 @@ defmodule ThriftQlEx.Parser do
   @spec extract_schema(%Thrift.AST.Service{}) :: list(%T.IntrospectionField{})
   defp extract_schema(%Thrift.AST.Service{functions: fns}) do
     fns |> Enum.map(fn {_, v} -> extract_field(v) end)
+  end
+
+  defp extract_scalars(scalars) do
+    scalars
+    |> Enum.map(fn
+      {k, _} when k in @id_like -> nil
+      {k, v} when v in @scalars -> %T.IntrospectionScalarType{name: k}
+    end)
+    |> Enum.filter(& &1)
   end
 
   ### Primitives
