@@ -164,4 +164,46 @@ defmodule ThriftQlExTest do
       e -> throw(e)
     end
   end
+
+  test "Thrift scalar typedefs get converted to GraphQL custom scalars" do
+    service = """
+    typedef string Date
+    typedef string ID
+
+    struct Foo {
+      1: ID id;
+      2: Date date;
+      3: list<Date> dates;
+    }
+
+    service MyService {
+      Foo foo()
+    }
+    """
+
+    expected_result = """
+    schema {
+    	query: Query
+    }
+
+    type Query {
+    \tfoo: Foo
+    }
+
+    type Foo {
+    \tid: ID
+    \tdate: Date
+    \tdates: [Date]
+    }
+
+    scalar Date
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
 end

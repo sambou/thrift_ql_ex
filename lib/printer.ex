@@ -15,6 +15,9 @@ defmodule ThriftQlEx.Printer do
   defp print_types(types) do
     types
     |> Enum.map(fn
+      %T.IntrospectionScalarType{name: name} ->
+        "scalar #{name}\n\n"
+
       %T.IntrospectionEnumType{name: name, enumValues: enum_values} ->
         "enum #{name} {\n#{print_types(enum_values)}}\n\n"
 

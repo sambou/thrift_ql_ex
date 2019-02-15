@@ -33,6 +33,7 @@ Thrift and GraphQL have similar type systems, but certain concepts from Thrift d
 - Enums do not keep values from Thrift, their value is the defined constant
 - Thrift sets are represented as GraphQL lists
 - Thrift unions are not supported
+- Typedefs only work for scalar values
 - Polymorphism is a non-feature in Thrift, so no Graphql `interface` type 😞
 
 ## Open topics
