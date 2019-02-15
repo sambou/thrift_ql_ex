@@ -15,7 +15,8 @@ defmodule Mix.Tasks.ThriftQlEx.Gen do
 
   def run(argv) do
     {parsed, _, _} = OptionParser.parse(argv, strict: [out: :string, thrift: :string])
-    [out: out, thrift: thrift] = parsed
+    out = Keyword.get(parsed, :out)
+    thrift = Keyword.get(parsed, :thrift)
 
     with {:ok, thrift_schema} <- File.read(thrift),
          {:ok, json} <- ThriftQlEx.parse(thrift_schema),
