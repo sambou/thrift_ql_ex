@@ -35,11 +35,18 @@ defmodule ThriftQlEx.Parser do
     }
   end
 
-  defp get_base_types(%Thrift.AST.Schema{enums: enums, structs: structs, typedefs: typedefs}) do
+  defp get_base_types(%Thrift.AST.Schema{
+         enums: enums,
+         structs: structs,
+         typedefs: typedefs,
+         unions: unions
+       }) do
     gql_enums = enums |> Enum.map(fn {_, v} -> extract_enum(v) end)
     gql_types = structs |> Enum.map(fn {_, v} -> extract_object(v) end)
     gql_scalars = typedefs |> extract_scalars()
-    types = gql_enums ++ gql_types ++ gql_scalars
+    qql_unions = unions |> Enum.map(fn {_, v} -> extract_unions(v) end)
+
+    types = gql_enums ++ gql_types ++ gql_scalars ++ qql_unions
 
     resolve_referenced_types(types, types)
   end
@@ -78,6 +85,12 @@ defmodule ThriftQlEx.Parser do
         %T.IntrospectionObjectType{
           object
           | fields: resolve_referenced_fields(fields, types)
+        }
+
+      %T.IntrospectionUnionType{possibleTypes: possibleTypes} = union ->
+        %T.IntrospectionUnionType{
+          union
+          | possibleTypes: resolve_referenced_fields(possibleTypes, types)
         }
 
       %ThriftQlEx.Types.IntrospectionEnumType{} = t ->
@@ -173,6 +186,13 @@ defmodule ThriftQlEx.Parser do
       {k, v} when v in @scalars -> %T.IntrospectionScalarType{name: k}
     end)
     |> Enum.filter(& &1)
+  end
+
+  defp extract_unions(%Thrift.AST.Union{name: name, fields: fields}) do
+    %T.IntrospectionUnionType{
+      name: name,
+      possibleTypes: Enum.map(fields, &extract_field/1)
+    }
   end
 
   ### Primitives

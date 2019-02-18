@@ -27,6 +27,9 @@ defmodule ThriftQlEx.Printer do
       %T.IntrospectionObjectType{name: name, fields: fields} ->
         "type #{name} {\n#{print_types(fields)}}\n\n"
 
+      %T.IntrospectionUnionType{name: name, possibleTypes: possibleTypes} ->
+        "union #{name} = #{print_union_types(possibleTypes)}\n\n"
+
       %T.IntrospectionField{args: args, name: name, type: %{name: n}}
       when args != [] ->
         "\t#{name}#{print_args(args)}: #{n}\n"
@@ -68,5 +71,13 @@ defmodule ThriftQlEx.Printer do
       |> Enum.join(", ")
 
     "(#{a})"
+  end
+
+  defp print_union_types(types) do
+    types
+    |> Enum.map(fn %T.IntrospectionField{type: %T.IntrospectionNamedTypeRef{name: name}} ->
+      name
+    end)
+    |> Enum.join(" | ")
   end
 end
