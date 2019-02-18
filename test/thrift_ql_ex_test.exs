@@ -206,4 +206,52 @@ defmodule ThriftQlExTest do
       e -> throw(e)
     end
   end
+
+  test "Thrift unions get parsed into GraphQL unions" do
+    service = """
+    union Foo {
+      1: Bar bar;
+      2: Baz baz;
+    }
+
+    struct Bar {
+      1: string bar;
+    }
+
+    struct Baz {
+      1: string baz;
+    }
+
+    service MyService {
+      Foo foo()
+    }
+    """
+
+    expected_result = """
+    schema {
+    \tquery: Query
+    }
+
+    type Query {
+    \tfoo: Foo
+    }
+
+    type Bar {
+    \tbar: String
+    }
+
+    type Baz {
+    \tbaz: String
+    }
+
+    union Foo = Bar | Baz
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
 end
