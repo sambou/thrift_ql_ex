@@ -254,4 +254,43 @@ defmodule ThriftQlExTest do
       e -> throw(e)
     end
   end
+
+  test "Thrift required fields get parsed into GraphQL NonNull fields" do
+    service = """
+    struct Bar {
+      1: required string bar;
+      2: required i64 foo;
+      3: required list<Bar> baz;
+      4: required Bar quuz;
+    }
+
+    service MyService {
+      Bar foo(1: string quuz)
+    }
+    """
+
+    expected_result = """
+    schema {
+    \tquery: Query
+    }
+
+    type Query {
+    \tfoo(quuz: String): Bar
+    }
+
+    type Bar {
+    \tbar: String!
+    \tfoo: Int!
+    \tbaz: [Bar]!
+    \tquuz: Bar!
+    }
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
 end

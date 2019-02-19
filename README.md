@@ -38,7 +38,6 @@ Thrift and GraphQL have similar type systems, but certain concepts from Thrift d
 ## Open topics
 
 - [ ] handle Maps
-- [ ] handle optional / non optional fields
 - [ ] deal with Services, Namespaces and naming conflicts
 - [ ] include descriptions and deprecations
 - [ ] implement directive for automatic resolution via Thrift client

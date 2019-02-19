@@ -107,6 +107,7 @@ defmodule ThriftQlEx.Parser do
       %T.IntrospectionFieldReference{} = field ->
         %T.IntrospectionField{
           name: field.name,
+          required: field.required,
           type: resolve_reference(field, types)
         }
 
@@ -198,42 +199,52 @@ defmodule ThriftQlEx.Parser do
   ### Primitives
 
   @spec extract_field(any) :: %T.IntrospectionField{} | %T.IntrospectionFieldReference{}
-  defp extract_field(%Thrift.AST.Field{type: val, name: name})
-       when val in @scalars do
-    %T.IntrospectionField{name: name, type: convert_scalar(val)}
+  defp extract_field(%Thrift.AST.Field{type: type, name: name, required: required})
+       when type in @scalars do
+    %T.IntrospectionField{name: name, type: convert_scalar(type), required: required}
   end
 
   defp extract_field(%Thrift.AST.Field{
-         type: %Thrift.AST.TypeRef{
-           referenced_type: type
-         },
-         name: name
+         name: name,
+         required: required,
+         type: %Thrift.AST.TypeRef{referenced_type: type}
+       })
+       when type in @id_like do
+    %T.IntrospectionField{name: name, type: convert_scalar(type), required: required}
+  end
+
+  defp extract_field(%Thrift.AST.Field{
+         name: name,
+         required: required,
+         type: %Thrift.AST.TypeRef{referenced_type: type}
        }) do
-    %T.IntrospectionFieldReference{name: name, referenced_type: type}
+    %T.IntrospectionFieldReference{name: name, referenced_type: type, required: required}
   end
 
   ### List-likes
 
   defp extract_field(%Thrift.AST.Field{
          name: name,
+         required: required,
          type: {container, val}
        })
        when val in @scalars and container in @list_like do
     %T.IntrospectionField{
       name: name,
-      type: %T.IntrospectionListTypeRef{
-        ofType: convert_scalar(val)
-      }
+      required: required,
+      type: %T.IntrospectionListTypeRef{ofType: convert_scalar(val)}
     }
   end
 
   defp extract_field(%Thrift.AST.Field{
          name: name,
+         required: required,
          type: {container, %Thrift.AST.TypeRef{referenced_type: type}}
        })
        when container in @list_like do
     %T.IntrospectionField{
       name: name,
+      required: required,
       type: %T.IntrospectionListTypeRef{
         ofType: %T.IntrospectionFieldReference{referenced_type: type}
       }
@@ -254,9 +265,7 @@ defmodule ThriftQlEx.Parser do
   defp extract_field(%Thrift.AST.Function{
          name: name,
          params: params,
-         return_type: %Thrift.AST.TypeRef{
-           referenced_type: type
-         }
+         return_type: %Thrift.AST.TypeRef{referenced_type: type}
        }) do
     %T.IntrospectionField{
       args: Enum.map(params, &extract_input_field/1),
@@ -305,4 +314,5 @@ defmodule ThriftQlEx.Parser do
   defp convert_scalar(s) when s in @int_like, do: %T.IntrospectionScalarType{name: "Int"}
   defp convert_scalar(s) when s in @float_like, do: %T.IntrospectionScalarType{name: "Float"}
   defp convert_scalar(s) when s in @bool_like, do: %T.IntrospectionScalarType{name: "Boolean"}
+  defp convert_scalar(s) when s in @id_like, do: %T.IntrospectionScalarType{name: "ID"}
 end
