@@ -24,8 +24,11 @@ defmodule ThriftQlEx.Printer do
       %T.IntrospectionEnumValue{name: name} ->
         "\t#{name}\n"
 
-      %T.IntrospectionObjectType{name: name, fields: fields} ->
-        "type #{name} {\n#{print_types(fields)}}\n\n"
+      %T.IntrospectionObjectType{name: name, fields: fields, interfaces: interfaces} ->
+        "type #{name}#{print_interfaces(interfaces)} {\n#{print_types(fields)}}\n\n"
+
+      %T.IntrospectionInterfaceType{name: name, fields: fields} ->
+        "interface #{name} {\n#{print_types(fields)}}\n\n"
 
       %T.IntrospectionUnionType{name: name, possibleTypes: possibleTypes} ->
         "union #{name} = #{print_union_types(possibleTypes)}\n\n"
@@ -79,5 +82,11 @@ defmodule ThriftQlEx.Printer do
       name
     end)
     |> Enum.join(" | ")
+  end
+
+  defp print_interfaces([]), do: ""
+
+  defp print_interfaces(interfaces) do
+    " implements #{Enum.join(interfaces, ", ")}"
   end
 end
