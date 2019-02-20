@@ -91,7 +91,8 @@ defmodule ThriftQlEx.Types do
               description: nil,
               referenced_type: nil,
               isDeprecated: false,
-              deprecationReason: nil
+              deprecationReason: nil,
+              required: false
   end
 
   defmodule IntrospectionField do
@@ -104,7 +105,8 @@ defmodule ThriftQlEx.Types do
               description: nil,
               type: nil,
               isDeprecated: false,
-              deprecationReason: nil
+              deprecationReason: nil,
+              required: false
   end
 
   defmodule IntrospectionInputValue do

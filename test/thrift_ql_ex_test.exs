@@ -260,7 +260,7 @@ defmodule ThriftQlExTest do
     typedef string ID
 
     struct Node {
-      1: ID id;
+      1: required ID id;
     } (iface)
 
     struct Fooable {
@@ -268,7 +268,7 @@ defmodule ThriftQlExTest do
     } (iface)
 
     struct Bar {
-      1: ID id;
+      1: required ID id;
     } (impl = "Node")
 
     struct BarEdge {
@@ -278,19 +278,19 @@ defmodule ThriftQlExTest do
 
     struct PageInfo {
       1: required bool hasNextPage;
-      2: bool hasPreviousPage;
+      2: required bool hasPreviousPage;
       3: string startCursor;
       4: string endCursor;
     }
 
     struct BarConnection {
       1: list<BarEdge> edges;
-      2: PageInfo pageInfo;
+      2: required PageInfo pageInfo;
     }
 
     struct Baz {
       1: string baz;
-      2: ID id;
+      2: required ID id;
       3: string foo;
     } (impl = "Node, Fooable")
 
@@ -320,12 +320,12 @@ defmodule ThriftQlExTest do
     }
 
     type Bar implements Node {
-    \tid: ID
+    \tid: ID!
     }
 
     type BarConnection {
     \tedges: [BarEdge]
-    \tpage_info: PageInfo
+    \tpage_info: PageInfo!
     }
 
     type BarEdge {
@@ -335,7 +335,7 @@ defmodule ThriftQlExTest do
 
     type Baz implements Node, Fooable {
     \tbaz: String
-    \tid: ID
+    \tid: ID!
     \tfoo: String
     }
 
@@ -344,14 +344,53 @@ defmodule ThriftQlExTest do
     }
 
     interface Node {
-    \tid: ID
+    \tid: ID!
     }
 
     type PageInfo {
-    \thas_next_page: Boolean
-    \thas_previous_page: Boolean
+    \thas_next_page: Boolean!
+    \thas_previous_page: Boolean!
     \tstart_cursor: String
     \tend_cursor: String
+    }
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
+
+  test "Thrift required fields get parsed into GraphQL NonNull fields" do
+    service = """
+    struct Bar {
+      1: required string bar;
+      2: required i64 foo;
+      3: required list<Bar> baz;
+      4: required Bar quuz;
+    }
+
+    service MyService {
+      Bar foo(1: string quuz)
+    }
+    """
+
+    expected_result = """
+    schema {
+    \tquery: Query
+    }
+
+    type Query {
+    \tfoo(quuz: String): Bar
+    }
+
+    type Bar {
+    \tbar: String!
+    \tfoo: Int!
+    \tbaz: [Bar]!
+    \tquuz: Bar!
     }
     """
 

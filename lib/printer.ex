@@ -37,26 +37,22 @@ defmodule ThriftQlEx.Printer do
       when args != [] ->
         "\t#{name}#{print_args(args)}: #{n}\n"
 
-      %T.IntrospectionField{name: name, type: %{name: n}} ->
-        "\t#{name}: #{n}\n"
+      %T.IntrospectionField{name: name, type: %{name: n}} = field ->
+        "\t#{name}: #{n}#{print_non_null(field)}\n"
 
       %T.IntrospectionField{
         args: args,
         name: name,
-        type: %T.IntrospectionListTypeRef{
-          ofType: %{name: n}
-        }
-      }
+        type: %T.IntrospectionListTypeRef{ofType: %{name: n}}
+      } = field
       when args != [] ->
-        "\t#{name}#{print_args(args)}: [#{n}]\n"
+        "\t#{name}#{print_args(args)}: [#{n}]#{print_non_null(field)}\n"
 
       %T.IntrospectionField{
         name: name,
-        type: %T.IntrospectionListTypeRef{
-          ofType: %{name: n}
-        }
-      } ->
-        "\t#{name}: [#{n}]\n"
+        type: %T.IntrospectionListTypeRef{ofType: %{name: n}}
+      } = field ->
+        "\t#{name}: [#{n}]#{print_non_null(field)}\n"
     end)
     |> Enum.join("")
   end
@@ -89,4 +85,7 @@ defmodule ThriftQlEx.Printer do
   defp print_interfaces(interfaces) do
     " implements #{Enum.join(interfaces, ", ")}"
   end
+
+  defp print_non_null(%{required: true}), do: "!"
+  defp print_non_null(_), do: ""
 end
