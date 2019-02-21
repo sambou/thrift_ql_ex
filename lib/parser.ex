@@ -253,11 +253,13 @@ defmodule ThriftQlEx.Parser do
 
   defp extract_field(%Thrift.AST.Function{
          name: name,
+         params: params,
          return_type: val
        })
        when val in @scalars do
     %T.IntrospectionField{
       name: name,
+      args: Enum.map(params, &extract_input_field/1),
       type: convert_scalar(val)
     }
   end

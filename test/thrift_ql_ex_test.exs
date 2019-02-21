@@ -46,6 +46,7 @@ defmodule ThriftQlExTest do
       BigOlObject getBigOlObject(1: BigOlObjectType type, 2: string id)
       list<BigOlObject> getBigOlObjectByCustomerId(1: BigOlObjectType type, 2: string customerId)
       string foo()
+      bool boo(1: string foo)
     }
     """
 
@@ -55,6 +56,7 @@ defmodule ThriftQlExTest do
     }
 
     type Query {
+    \tboo(foo: String): Boolean
     \tfoo: String
     \tgetBigOlObject(type: BigOlObjectType, id: String): BigOlObject
     \tgetBigOlObjectByCustomerId(type: BigOlObjectType, customer_id: String): [BigOlObject]
