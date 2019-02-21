@@ -6,7 +6,9 @@ defmodule ThriftQlEx.Printer do
   def print(%T.IntrospectionQuery{__schema: schema}) do
     {:ok,
      """
-     schema {\n\tquery: #{schema.queryType.name}\n}
+     schema {
+     \tquery: #{schema.queryType.name}#{print_mutation(schema)}
+     }
 
      #{print_types(schema.types) |> String.trim_trailing()}
      """}
@@ -79,4 +81,7 @@ defmodule ThriftQlEx.Printer do
 
   defp print_non_null(%{required: true}), do: "!"
   defp print_non_null(_), do: ""
+
+  defp print_mutation(%{mutationType: type}) when type != nil, do: "\n\tmutation: #{type.name}"
+  defp print_mutation(_), do: ""
 end
