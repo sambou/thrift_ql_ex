@@ -295,4 +295,35 @@ defmodule ThriftQlExTest do
       e -> throw(e)
     end
   end
+
+  test "Marking mutations with annotations" do
+    service = """
+    service MyService {
+      string foo(1: string quuz)
+      string bar(1: string quuz) (mutation)
+    }
+    """
+
+    expected_result = """
+    schema {
+    \tquery: Query
+    \tmutation: Mutation
+    }
+
+    type Mutation {
+    \tbar(quuz: String): String
+    }
+
+    type Query {
+    \tfoo(quuz: String): String
+    }
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
 end
