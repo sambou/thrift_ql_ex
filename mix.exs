@@ -27,7 +27,8 @@ defmodule ThriftQlEx.MixProject do
     [
       {:thrift, github: "pinterest/elixir-thrift", submodules: true},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
-      {:poison, "~> 3.1"}
+      {:poison, "~> 3.1"},
+      {:stream_data, "~> 0.1", only: :test}
     ]
   end
 end

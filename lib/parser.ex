@@ -23,12 +23,13 @@ defmodule ThriftQlEx.Parser do
   end
 
   defp parse_schema(%Thrift.AST.Schema{} = schema) do
-    types = get_base_types(schema) |> add_query(schema)
+    types = get_base_types(schema) |> add_query(schema) |> add_mutation(schema)
+    mutation = types |> Enum.find(fn x -> x.name == "Mutation" end)
 
     %T.IntrospectionQuery{
       __schema: %T.IntrospectionSchema{
         queryType: %T.IntrospectionNamedTypeRef{name: "Query", kind: "OBJECT"},
-        mutationType: nil,
+        mutationType: mutation,
         types: types,
         directives: []
       }
@@ -54,7 +55,19 @@ defmodule ThriftQlEx.Parser do
   end
 
   defp add_query(base_types, %Thrift.AST.Schema{services: services}) do
-    gql_queries = services |> Enum.map(fn {_, v} -> extract_schema(v) end) |> List.flatten()
+    gql_queries =
+      services
+      |> Enum.map(fn {_, %Thrift.AST.Service{functions: fns}} ->
+        fns |> Enum.map(fn {_, v} -> v end)
+      end)
+      |> List.flatten()
+      |> Enum.filter(fn
+        %{annotations: %{query: _}} -> true
+        %{annotations: x} when x == %{} -> true
+        _ -> false
+      end)
+      |> Enum.map(&extract_field/1)
+
     query_fields = resolve_referenced_types(gql_queries, base_types)
 
     [
@@ -64,6 +77,34 @@ defmodule ThriftQlEx.Parser do
       }
       | base_types
     ]
+  end
+
+  defp add_mutation(base_types, %Thrift.AST.Schema{services: services}) do
+    gql_mutations =
+      services
+      |> Enum.map(fn {_, %Thrift.AST.Service{functions: fns}} ->
+        fns |> Enum.map(fn {_, v} -> v end)
+      end)
+      |> List.flatten()
+      |> Enum.filter(fn
+        %{annotations: %{mutation: _}} -> true
+        _ -> false
+      end)
+      |> Enum.map(&extract_field/1)
+
+    case resolve_referenced_types(gql_mutations, base_types) do
+      [] ->
+        base_types
+
+      mutation_fields ->
+        [
+          %T.IntrospectionObjectType{
+            name: "Mutation",
+            fields: mutation_fields
+          }
+          | base_types
+        ]
+    end
   end
 
   defp resolve_referenced_types(unresolved_types, types) do
@@ -199,11 +240,6 @@ defmodule ThriftQlEx.Parser do
     }
   end
 
-  @spec extract_schema(%Thrift.AST.Service{}) :: list(%T.IntrospectionField{})
-  defp extract_schema(%Thrift.AST.Service{functions: fns}) do
-    fns |> Enum.map(fn {_, v} -> extract_field(v) end)
-  end
-
   defp extract_scalars(scalars) do
     scalars
     |> Enum.map(fn
@@ -281,11 +317,13 @@ defmodule ThriftQlEx.Parser do
 
   defp extract_field(%Thrift.AST.Function{
          name: name,
+         params: params,
          return_type: val
        })
        when val in @scalars or val in @id_like do
     %T.IntrospectionField{
       name: name,
+      args: Enum.map(params, &extract_input_field/1),
       type: convert_scalar(val)
     }
   end

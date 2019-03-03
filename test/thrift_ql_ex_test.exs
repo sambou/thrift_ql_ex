@@ -46,6 +46,7 @@ defmodule ThriftQlExTest do
       BigOlObject getBigOlObject(1: BigOlObjectType type, 2: string id)
       list<BigOlObject> getBigOlObjectByCustomerId(1: BigOlObjectType type, 2: string customerId)
       string foo()
+      bool boo(1: string foo)
     }
     """
 
@@ -55,6 +56,7 @@ defmodule ThriftQlExTest do
     }
 
     type Query {
+    \tboo(foo: String): Boolean
     \tfoo: String
     \tgetBigOlObject(type: BigOlObjectType, id: String): BigOlObject
     \tgetBigOlObjectByCustomerId(type: BigOlObjectType, customer_id: String): [BigOlObject]
@@ -391,6 +393,37 @@ defmodule ThriftQlExTest do
     \tfoo: Int!
     \tbaz: [Bar]!
     \tquuz: Bar!
+    }
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
+
+  test "Marking mutations with annotations" do
+    service = """
+    service MyService {
+      string foo(1: string quuz)
+      string bar(1: string quuz) (mutation)
+    }
+    """
+
+    expected_result = """
+    schema {
+    \tquery: Query
+    \tmutation: Mutation
+    }
+
+    type Mutation {
+    \tbar(quuz: String): String
+    }
+
+    type Query {
+    \tfoo(quuz: String): String
     }
     """
 
