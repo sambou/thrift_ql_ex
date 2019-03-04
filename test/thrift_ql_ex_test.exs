@@ -179,7 +179,7 @@ defmodule ThriftQlExTest do
     }
 
     service MyService {
-      Foo foo()
+      Foo foo(1: Date significantDate)
     }
     """
 
@@ -189,7 +189,7 @@ defmodule ThriftQlExTest do
     }
 
     type Query {
-    \tfoo: Foo
+    \tfoo(significant_date: Date): Foo
     }
 
     type Foo {
@@ -247,6 +247,114 @@ defmodule ThriftQlExTest do
     }
 
     union Foo = Bar | Baz
+    """
+
+    with {:ok, json} <- service |> ThriftQlEx.parse(),
+         {:ok, sdl_schema} <- ThriftQlEx.print(json) do
+      assert sdl_schema == expected_result
+    else
+      e -> throw(e)
+    end
+  end
+
+  test "GraphQL interfaces are supported via annotations" do
+    service = """
+    typedef string ID
+
+    struct Node {
+      1: required ID id;
+    } (iface)
+
+    struct Fooable {
+      1: string foo;
+    } (iface)
+
+    struct Bar {
+      1: required ID id;
+    } (impl = "Node")
+
+    struct BarEdge {
+      1: Bar node;
+      2: string cursor;
+    }
+
+    struct PageInfo {
+      1: required bool hasNextPage;
+      2: required bool hasPreviousPage;
+      3: string startCursor;
+      4: string endCursor;
+    }
+
+    struct BarConnection {
+      1: list<BarEdge> edges;
+      2: required PageInfo pageInfo;
+    }
+
+    struct Baz {
+      1: string baz;
+      2: required ID id;
+      3: string foo;
+    } (impl = "Node, Fooable")
+
+    union NodeTypes {
+      1: Bar bar;
+      2: Baz baz;
+    } (gql_ignore)
+
+    union FooableTypes {
+      1: Baz baz;
+    } (gql_ignore)
+
+    service MyService {
+      NodeTypes node(1: ID id) (iface = "Node")
+      BarConnection getBars(1: required i64 first, 2: string after, 3: i64 last, 4: string before)
+    }
+    """
+
+    expected_result = """
+    schema {
+    \tquery: Query
+    }
+
+    type Query {
+    \tgetBars(first: Int, after: String, last: Int, before: String): BarConnection
+    \tnode(id: ID): Node
+    }
+
+    type Bar implements Node {
+    \tid: ID!
+    }
+
+    type BarConnection {
+    \tedges: [BarEdge]
+    \tpage_info: PageInfo!
+    }
+
+    type BarEdge {
+    \tnode: Bar
+    \tcursor: String
+    }
+
+    type Baz implements Node, Fooable {
+    \tbaz: String
+    \tid: ID!
+    \tfoo: String
+    }
+
+    interface Fooable {
+    \tfoo: String
+    }
+
+    interface Node {
+    \tid: ID!
+    }
+
+    type PageInfo {
+    \thas_next_page: Boolean!
+    \thas_previous_page: Boolean!
+    \tstart_cursor: String
+    \tend_cursor: String
+    }
     """
 
     with {:ok, json} <- service |> ThriftQlEx.parse(),

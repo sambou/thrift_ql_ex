@@ -45,7 +45,9 @@ defmodule ThriftQlEx.Parser do
     gql_enums = enums |> Enum.map(fn {_, v} -> extract_enum(v) end)
     gql_types = structs |> Enum.map(fn {_, v} -> extract_object(v) end)
     gql_scalars = typedefs |> extract_scalars()
-    qql_unions = unions |> Enum.map(fn {_, v} -> extract_unions(v) end)
+
+    qql_unions =
+      unions |> Enum.map(fn {_, v} -> extract_unions(v) end) |> Enum.filter(fn x -> x != nil end)
 
     types = gql_enums ++ gql_types ++ gql_scalars ++ qql_unions
 
@@ -61,6 +63,8 @@ defmodule ThriftQlEx.Parser do
       |> List.flatten()
       |> Enum.filter(fn
         %{annotations: %{query: _}} -> true
+        %{annotations: %{iface: _}} -> true
+        %{annotations: %{query: _, iface: _}} -> true
         %{annotations: x} when x == %{} -> true
         _ -> false
       end)
@@ -86,6 +90,7 @@ defmodule ThriftQlEx.Parser do
       |> List.flatten()
       |> Enum.filter(fn
         %{annotations: %{mutation: _}} -> true
+        %{annotations: %{mutation: _, iface: _}} -> true
         _ -> false
       end)
       |> Enum.map(&extract_field/1)
@@ -192,10 +197,6 @@ defmodule ThriftQlEx.Parser do
     end)
   end
 
-  defp resolve_reference(%{referenced_type: t}, _types) when t in @id_like do
-    %T.IntrospectionScalarType{name: "ID"}
-  end
-
   defp resolve_reference(%{referenced_type: type}, types) do
     t = Enum.find(types, fn %{name: name} -> name == type end)
     %T.IntrospectionNamedTypeRef{name: t.name, kind: t.kind}
@@ -209,7 +210,33 @@ defmodule ThriftQlEx.Parser do
   end
 
   @spec extract_object(%Thrift.AST.Struct{}) :: %T.IntrospectionObjectType{}
-  defp extract_object(%Thrift.AST.Struct{name: name, fields: fields}) do
+  defp extract_object(%Thrift.AST.Struct{
+         annotations: %{iface: _},
+         name: name,
+         fields: fields
+       }) do
+    %T.IntrospectionInterfaceType{
+      name: name,
+      fields: Enum.map(fields, &extract_field/1)
+    }
+  end
+
+  defp extract_object(%Thrift.AST.Struct{
+         annotations: %{impl: implements},
+         name: name,
+         fields: fields
+       }) do
+    %T.IntrospectionObjectType{
+      name: name,
+      fields: Enum.map(fields, &extract_field/1),
+      interfaces: String.split(implements, ",") |> Enum.map(&String.trim/1)
+    }
+  end
+
+  defp extract_object(%Thrift.AST.Struct{
+         name: name,
+         fields: fields
+       }) do
     %T.IntrospectionObjectType{
       name: name,
       fields: Enum.map(fields, &extract_field/1)
@@ -223,6 +250,10 @@ defmodule ThriftQlEx.Parser do
       {k, v} when v in @scalars -> %T.IntrospectionScalarType{name: k}
     end)
     |> Enum.filter(& &1)
+  end
+
+  defp extract_unions(%Thrift.AST.Union{annotations: %{gql_ignore: _}}) do
+    nil
   end
 
   defp extract_unions(%Thrift.AST.Union{name: name, fields: fields}) do
@@ -264,7 +295,7 @@ defmodule ThriftQlEx.Parser do
          required: required,
          type: {container, val}
        })
-       when val in @scalars and container in @list_like do
+       when (val in @scalars or val in @id_like) and container in @list_like do
     %T.IntrospectionField{
       name: name,
       required: required,
@@ -292,11 +323,26 @@ defmodule ThriftQlEx.Parser do
          params: params,
          return_type: val
        })
-       when val in @scalars do
+       when val in @scalars or val in @id_like do
     %T.IntrospectionField{
       name: name,
       args: Enum.map(params, &extract_input_field/1),
       type: convert_scalar(val)
+    }
+  end
+
+  defp extract_field(%Thrift.AST.Function{
+         name: name,
+         params: params,
+         annotations: %{iface: type},
+         return_type: %Thrift.AST.TypeRef{
+           referenced_type: _t
+         }
+       }) do
+    %T.IntrospectionField{
+      args: Enum.map(params, &extract_input_field/1),
+      name: name,
+      type: %T.IntrospectionFieldReference{referenced_type: String.to_atom(type)}
     }
   end
 
@@ -334,8 +380,18 @@ defmodule ThriftQlEx.Parser do
   ### Input types
   @spec extract_input_field(%Thrift.AST.Field{}) :: %T.IntrospectionInputValue{}
   defp extract_input_field(%Thrift.AST.Field{type: val, name: name})
-       when val in @scalars do
+       when val in @scalars or val in @id_like do
     %T.IntrospectionInputValue{name: name, type: convert_scalar(val)}
+  end
+
+  defp extract_input_field(%Thrift.AST.Field{
+         name: name,
+         type: %Thrift.AST.TypeRef{
+           referenced_type: type
+         }
+       })
+       when type in @id_like do
+    %T.IntrospectionInputValue{name: name, type: convert_scalar(type)}
   end
 
   defp extract_input_field(%Thrift.AST.Field{
