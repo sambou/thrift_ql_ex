@@ -63,6 +63,8 @@ defmodule ThriftQlEx.Parser do
       |> List.flatten()
       |> Enum.filter(fn
         %{annotations: %{query: _}} -> true
+        %{annotations: %{iface: _}} -> true
+        %{annotations: %{query: _, iface: _}} -> true
         %{annotations: x} when x == %{} -> true
         _ -> false
       end)
@@ -88,6 +90,7 @@ defmodule ThriftQlEx.Parser do
       |> List.flatten()
       |> Enum.filter(fn
         %{annotations: %{mutation: _}} -> true
+        %{annotations: %{mutation: _, iface: _}} -> true
         _ -> false
       end)
       |> Enum.map(&extract_field/1)
