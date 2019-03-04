@@ -34,7 +34,6 @@ Thrift and GraphQL have similar type systems, but certain concepts from Thrift d
 - Thrift sets are represented as GraphQL lists
 - Typedefs only work for scalar values
 - Mutations can be added via a Thrift annotation (`string foo() (mutation)`)
-- Polymorphism is a non-feature in Thrift, so no Graphql `interface` type 😞
 
 ## Open topics
 
