@@ -1,4 +1,5 @@
 # ThriftQlEx
+[![CircleCI](https://circleci.com/gh/sambou/thrift_ql_ex.svg?style=svg)](https://circleci.com/gh/sambou/thrift_ql_ex)
 
 ![Thrift to GraphQL](images/thrift_to_gql.png)
 
