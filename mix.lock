@@ -8,5 +8,5 @@
   "poison": {:hex, :poison, "4.0.1", "bcb755a16fac91cad79bfe9fc3585bb07b9331e50cfe3420a24bcc2d735709ae", [:mix], [], "hexpm"},
   "ranch": {:hex, :ranch, "1.7.1", "6b1fab51b49196860b733a49c07604465a47bdb78aa10c1c16a3d199f7f8c881", [:rebar3], [], "hexpm"},
   "stream_data": {:hex, :stream_data, "0.4.2", "fa86b78c88ec4eaa482c0891350fcc23f19a79059a687760ddcf8680aac2799b", [:mix], [], "hexpm"},
-  "thrift": {:git, "https://github.com/pinterest/elixir-thrift.git", "621a2039bcbcec62d1cedc85b01421813e0910e8", [submodules: true]},
+  "thrift": {:git, "https://github.com/pinterest/elixir-thrift.git", "3d47830668352f38ed6c8faf5b0b3a6d08fd38a2", [submodules: true]},
 }
