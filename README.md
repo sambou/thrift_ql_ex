@@ -1,5 +1,7 @@
 # ThriftQlEx
+
 [![CircleCI](https://circleci.com/gh/sambou/thrift_ql_ex.svg?style=svg)](https://circleci.com/gh/sambou/thrift_ql_ex)
+[![Coverage Status](https://coveralls.io/repos/github/sambou/thrift_ql_ex/badge.svg?branch=master)](https://coveralls.io/github/sambou/thrift_ql_ex?branch=master)
 
 ![Thrift to GraphQL](images/thrift_to_gql.png)
 
