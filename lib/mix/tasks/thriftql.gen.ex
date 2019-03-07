@@ -24,7 +24,7 @@ defmodule Mix.Tasks.ThriftQlEx.Gen do
          :ok <- File.write(out, sdl) do
       IO.puts("Schema created at #{out}")
     else
-      e -> IO.inspect(e)
+      e -> e
     end
   end
 end

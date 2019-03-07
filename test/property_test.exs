@@ -25,9 +25,10 @@ defmodule PropertyTest do
   defp t_to_g("required"), do: "!"
   defp t_to_g(_), do: ""
 
-  defp service_generator() do
+  defp service_generator do
     string =
-      StreamData.string(?a..?z, min_length: 1)
+      ?a..?z
+      |> StreamData.string(min_length: 1)
       |> StreamData.filter(fn
         x when x in @reserved -> false
         _ -> true

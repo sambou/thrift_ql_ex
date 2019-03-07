@@ -10,7 +10,7 @@ defmodule ThriftQlEx.Printer do
      \tquery: #{schema.queryType.name}#{print_mutation(schema)}
      }
 
-     #{print_types(schema.types) |> String.trim_trailing()}
+     #{schema.types |> print_types() |> String.trim_trailing()}
      """}
   end
 
@@ -32,8 +32,8 @@ defmodule ThriftQlEx.Printer do
       %T.IntrospectionInterfaceType{name: name, fields: fields} ->
         "interface #{name} {\n#{print_types(fields)}}\n\n"
 
-      %T.IntrospectionUnionType{name: name, possibleTypes: possibleTypes} ->
-        "union #{name} = #{print_union_types(possibleTypes)}\n\n"
+      %T.IntrospectionUnionType{name: name, possibleTypes: possible_types} ->
+        "union #{name} = #{print_union_types(possible_types)}\n\n"
 
       %T.IntrospectionField{args: args, name: name, type: %{name: n}}
       when args != [] ->

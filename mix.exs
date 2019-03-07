@@ -36,7 +36,8 @@ defmodule ThriftQlEx.MixProject do
       {:excoveralls, "~> 0.10", only: :test, runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:poison, "~> 4.0"},
-      {:stream_data, "~> 0.1", only: :test}
+      {:stream_data, "~> 0.1", only: :test},
+      {:credo, "~> 1.0.2", only: [:dev, :test], runtime: false}
     ]
   end
 end

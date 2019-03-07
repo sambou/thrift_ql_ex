@@ -23,7 +23,7 @@ defmodule ThriftQlEx.Parser do
   end
 
   defp parse_schema(%Thrift.AST.Schema{} = schema) do
-    types = get_base_types(schema) |> add_query(schema) |> add_mutation(schema)
+    types = schema |> get_base_types() |> add_query(schema) |> add_mutation(schema)
     mutation = types |> Enum.find(fn x -> x.name == "Mutation" end)
 
     %T.IntrospectionQuery{
@@ -133,10 +133,10 @@ defmodule ThriftQlEx.Parser do
           | fields: resolve_referenced_fields(fields, types)
         }
 
-      %T.IntrospectionUnionType{possibleTypes: possibleTypes} = union ->
+      %T.IntrospectionUnionType{possibleTypes: possible_types} = union ->
         %T.IntrospectionUnionType{
           union
-          | possibleTypes: resolve_referenced_fields(possibleTypes, types)
+          | possibleTypes: resolve_referenced_fields(possible_types, types)
         }
 
       %ThriftQlEx.Types.IntrospectionEnumType{} = t ->
@@ -204,9 +204,9 @@ defmodule ThriftQlEx.Parser do
 
   @spec extract_enum(%Thrift.AST.TEnum{}) :: %T.IntrospectionEnumType{}
   defp extract_enum(%Thrift.AST.TEnum{name: name, values: values}) do
-    enumValues = values |> Enum.map(fn {v, _} -> %T.IntrospectionEnumValue{name: v} end)
+    enum_values = values |> Enum.map(fn {v, _} -> %T.IntrospectionEnumValue{name: v} end)
 
-    %T.IntrospectionEnumType{name: name, enumValues: enumValues}
+    %T.IntrospectionEnumType{name: name, enumValues: enum_values}
   end
 
   @spec extract_object(%Thrift.AST.Struct{}) :: %T.IntrospectionObjectType{}
@@ -229,7 +229,7 @@ defmodule ThriftQlEx.Parser do
     %T.IntrospectionObjectType{
       name: name,
       fields: Enum.map(fields, &extract_field/1),
-      interfaces: String.split(implements, ",") |> Enum.map(&String.trim/1)
+      interfaces: implements |> String.split(",") |> Enum.map(&String.trim/1)
     }
   end
 
