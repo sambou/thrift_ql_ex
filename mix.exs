@@ -9,6 +9,7 @@ defmodule ThriftQlEx.MixProject do
       start_permanent: false,
       deps: deps(),
       description: "Converts Thrift IDL into GraphQL SDL.",
+      test_coverage: [tool: ExCoveralls],
       package: [
         licenses: ["MIT"]
       ]
@@ -26,6 +27,7 @@ defmodule ThriftQlEx.MixProject do
   defp deps do
     [
       {:thrift, github: "pinterest/elixir-thrift", submodules: true},
+      {:excoveralls, "~> 0.10", only: :test, runtime: false},
       {:ex_doc, "~> 0.19", only: :dev, runtime: false},
       {:poison, "~> 4.0"},
       {:stream_data, "~> 0.1", only: :test}
