@@ -3,6 +3,8 @@
 [![CircleCI](https://circleci.com/gh/sambou/thrift_ql_ex.svg?style=svg)](https://circleci.com/gh/sambou/thrift_ql_ex)
 [![Coverage Status](https://coveralls.io/repos/github/sambou/thrift_ql_ex/badge.svg?branch=master)](https://coveralls.io/github/sambou/thrift_ql_ex?branch=master)
 
+[Try it out here!](https://thriftql.gigalixirapp.com/)
+
 ![Thrift to GraphQL](images/thrift_to_gql.png)
 
 ThriftQlEx converts Thrift IDL into GraphQL SDL. Inspired by [AirBnBs approach](https://medium.com/airbnb-engineering/reconciling-graphql-and-thrift-at-airbnb-a97e8d290712).
