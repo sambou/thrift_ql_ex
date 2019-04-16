@@ -1,9 +1,10 @@
 # ThriftQlEx
 
-[![CircleCI](https://circleci.com/gh/sambou/thrift_ql_ex.svg?style=svg)](https://circleci.com/gh/sambou/thrift_ql_ex)
+[![Demo](https://img.shields.io/badge/demo-liveview-blue.svg)](https://thriftql.gigalixirapp.com/)
+[![Docs](https://img.shields.io/badge/docs-v.0.3.0-lightgrey.svg)](https://sambou.github.io/thrift_ql_ex)
 [![Coverage Status](https://coveralls.io/repos/github/sambou/thrift_ql_ex/badge.svg?branch=master)](https://coveralls.io/github/sambou/thrift_ql_ex?branch=master)
+[![CircleCI](https://circleci.com/gh/sambou/thrift_ql_ex.svg?style=svg)](https://circleci.com/gh/sambou/thrift_ql_ex)
 
-[Try it out here!](https://thriftql.gigalixirapp.com/)
 
 ![Thrift to GraphQL](images/thrift_to_gql.png)
 
