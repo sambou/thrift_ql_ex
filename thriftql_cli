@@ -1,0 +1,4 @@
+#!/bin/bash
+
+VAR="\"$@\""
+_build/prod/rel/cli/bin/cli eval "ThriftQlEx.thrift_to_graphql(${VAR})"

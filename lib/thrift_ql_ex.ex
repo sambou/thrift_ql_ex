@@ -6,6 +6,12 @@ defmodule ThriftQlEx do
   alias ThriftQlEx.Types, as: T
 
   @doc ~S"""
+  Reads a thrift file and produces a parsed GraphQL schema.
+  """
+  @spec thrift_to_graphql(String.t() | [String.t()]) :: :error | :ok
+  defdelegate thrift_to_graphql(args), to: ThriftQlEx.CLI
+
+  @doc ~S"""
   Parses a Thrift IDL string into a GraphQL JSON introspection query.
   """
   @spec parse(String.t()) :: {:ok, %T.IntrospectionQuery{__schema: term()}} | {:error, term()}

@@ -13,16 +13,9 @@ defmodule Mix.Tasks.ThriftQlEx.Gen do
   * `--out` - The file name of the output SDL schema
   """
 
-  def run(argv) do
-    {parsed, _, _} = OptionParser.parse(argv, strict: [out: :string, thrift: :string])
-    out = Keyword.get(parsed, :out)
-    thrift = Keyword.get(parsed, :thrift)
-
-    with {:ok, thrift_schema} <- File.read(thrift),
-         {:ok, json} <- ThriftQlEx.parse(thrift_schema),
-         {:ok, sdl} <- ThriftQlEx.print(json),
-         :ok <- File.write(out, sdl) do
-      IO.puts("Schema created at #{out}")
+  def run(args) do
+    with :ok <- ThriftQlEx.thrift_to_graphql(args) do
+      IO.puts("Schema successfully created.")
     else
       e -> e
     end

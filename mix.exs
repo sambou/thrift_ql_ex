@@ -4,8 +4,8 @@ defmodule ThriftQlEx.MixProject do
   def project do
     [
       app: :thrift_ql_ex,
-      version: "0.3.0",
-      elixir: "~> 1.7",
+      version: "0.4.0",
+      elixir: "~> 1.10",
       start_permanent: false,
       deps: deps(),
       description: "Converts Thrift IDL into GraphQL SDL.",
@@ -18,6 +18,12 @@ defmodule ThriftQlEx.MixProject do
       ],
       package: [
         licenses: ["MIT"]
+      ],
+      releases: [
+        cli: [
+          include_executables_for: [:unix, :windows],
+          applications: [runtime_tools: :none]
+        ]
       ]
     ]
   end

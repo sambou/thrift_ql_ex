@@ -3,7 +3,7 @@ jobs: # basic units of work in a run
   build: # runs not using Workflows must have a `build` job as entry point
     parallelism: 1 # run only one instance of this job in parallel
     docker: # run the steps with Docker
-      - image: circleci/elixir:1.7.3 # ...with this image as the primary container; this is where all `steps` will run
+      - image: circleci/elixir:1.10 # ...with this image as the primary container; this is where all `steps` will run
         environment: # environment variables for primary container
           MIX_ENV: test
       - image: circleci/postgres:10.1-alpine # database image
@@ -50,9 +50,19 @@ jobs: # basic units of work in a run
 
       - run: mix coveralls.circle # run all tests in project
 
+      - run: MIX_ENV=prod mix release
+
+      - run:
+          command: |
+            mkdir /tmp/artifacts;
+            zip -r /tmp/artifacts/thriftql thriftql_cli _build/prod
+
       - store_test_results: # upload junit test results for display in Test Summary
           # Read more: https://circleci.com/docs/2.0/collect-test-data/
           path: _build/test/lib/thrift_ql_ex # Replace with the name of your :app
+      - store_artifacts:
+          path: /tmp/artifacts
+          destination: thriftql
 test:
   override:
     - mix coveralls.circle
